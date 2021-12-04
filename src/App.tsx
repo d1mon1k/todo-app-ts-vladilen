@@ -1,26 +1,61 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { useEffect, useState } from 'react'
+import Navbar from './components/Navbar'
+import TodoForm from './components/TodoForm'
+import TodoList from './components/TodoList'
+import { ITodo } from './interfaces'
 
-function App() {
+const App: React.FC = () => {
+  const [tasks, setTasks] = useState<ITodo[]>([])
+
+  useEffect(() => {
+    const saveTasks = JSON.parse(
+      localStorage.getItem('tasks') || '[]'
+    ) as ITodo[]
+
+    setTasks(saveTasks)
+  }, []) //note если установлен второй параметр - [] - значит эффект сработает только 1 раз и всё.
+
+  useEffect(() => {
+    localStorage.setItem('tasks', JSON.stringify(tasks))
+  }, [tasks])
+
+  const addHandler = (title: string): void => {
+    const newTodo: ITodo = {
+      id: Date.now(),
+      title: title,
+      completed: false,
+    }
+    setTasks((prev) => [newTodo, ...prev])
+  }
+
+  const changeHandler = (id: number): void => {
+    setTasks((prev) =>
+      prev.map((task) => {
+        if (task.id === id) {
+          task.completed = !task.completed
+        }
+        return task
+      })
+    )
+  }
+
+  const removeHandler = (id: number): void => {
+    setTasks((prev) => prev.filter((task) => task.id !== id))
+  }
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+    <>
+      <Navbar />
+      <div className="container">
+        <TodoForm onAdd={addHandler} />
+        <TodoList
+          tasks={tasks}
+          onChange={changeHandler}
+          onRemove={removeHandler}
+        />
+      </div>
+    </>
+  )
 }
 
-export default App;
+export default App
